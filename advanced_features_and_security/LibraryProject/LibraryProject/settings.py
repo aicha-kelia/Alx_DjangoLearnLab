@@ -137,7 +137,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # ==========================
 
 
-# HTTPS and secure cookies
+# HTTPS and secure 
+# Tell Django to trust the X-Forwarded-Proto header for HTTPS detection
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
