@@ -24,3 +24,17 @@
 - Permissions are enforced with `@permission_required`.
 - URLs are defined in `bookshelf/urls.py`.
 - Only users with proper permissions can access each view.
+
+## Task 3 – HTTPS & Secure Redirects
+
+- SECURE_SSL_REDIRECT = True
+- SESSION_COOKIE_SECURE / CSRF_COOKIE_SECURE = True
+- HSTS configured:
+  - SECURE_HSTS_SECONDS = 31536000 (1 year)
+  - SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+  - SECURE_HSTS_PRELOAD = True
+- X_FRAME_OPTIONS = DENY
+- SECURE_CONTENT_TYPE_NOSNIFF / SECURE_BROWSER_XSS_FILTER = True
+- Content Security Policy applied (CSP_DEFAULT_SRC, CSP_SCRIPT_SRC, CSP_STYLE_SRC, etc.)
+- Tested: HTTP requests redirect to HTTPS (ready for production)
+s
