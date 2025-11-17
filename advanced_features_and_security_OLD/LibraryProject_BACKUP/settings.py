@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bookshelf',
     'relationship_app',
-    'users',
 ]
 
 MIDDLEWARE = [
@@ -116,9 +115,17 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
+
 STATIC_URL = 'static/'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Custom User Model
+AUTH_USER_MODEL = 'relationship_app.CustomUser'
 
-AUTH_USER_MODEL = 'bookshelf.CustomUser'
+# Media files (for profile photos)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

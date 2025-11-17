@@ -39,11 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bookshelf',
     'relationship_app',
-    'users',
+    'csp',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'csp.middleware.CSPMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -116,9 +117,62 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
+
 STATIC_URL = 'static/'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
+# Custom User Model
 AUTH_USER_MODEL = 'bookshelf.CustomUser'
+
+# Media files (for profile photos)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ==========================
+# SECURITY SETTINGS - ALX TASK
+# ==========================
+
+
+# HTTPS and secure 
+# Tell Django to trust the X-Forwarded-Proto header for HTTPS detection
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# HTTP Strict Transport Security (HSTS)
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# Browser protections
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+
+# Content Security Policy (CSP)
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
+CSP_IMG_SRC = ("'self'", "data:")
+CSP_FONT_SRC = ("'self'",)
+CSP_CONNECT_SRC = ("'self'",)
+CSP_FRAME_SRC = ("'none'",)
+
+
+# ========================
+# SECURITY MEASURES DOCUMENTATION
+# ========================
+# DEBUG = False -> avoid exposing sensitive info
+# SECURE_SSL_REDIRECT = True -> force HTTPS
+# SESSION_COOKIE_SECURE / CSRF_COOKIE_SECURE -> cookies only over HTTPS
+# HSTS settings -> force browsers to use HTTPS
+# X_FRAME_OPTIONS = 'DENY' -> prevent clickjacking
+# SECURE_CONTENT_TYPE_NOSNIFF / SECURE_BROWSER_XSS_FILTER -> prevent XSS
+# CSP settings -> define safe sources for scripts, styles, images, etc.
