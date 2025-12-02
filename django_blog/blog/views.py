@@ -7,6 +7,9 @@ from django.urls import reverse_lazy
 
 from .models import Post, Comment
 from .forms import CustomUserCreationForm, CustomUserChangeForm, PostForm, CommentForm
+from django.db.models import Q
+from taggit.models import Tag
+
 
 
 def register(request):
@@ -116,3 +119,17 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy('post-detail', kwargs={'pk': self.object.post.pk})
+
+def post_search(request):
+    query = request.GET.get('q', '')
+    results = Post.objects.filter(
+        Q(title__icontains=query) | 
+        Q(content__icontains=query) | 
+        Q(tags__name__icontains=query)
+    ).distinct()
+    return render(request, 'blog/search_results.html', {'posts': results, 'query': query})
+
+def posts_by_tag(request, tag_name):
+    tag = get_object_or_404(Tag, name=tag_name)
+    posts = Post.objects.filter(tags__name__in=[tag_name])
+    return render(request, 'blog/tag_posts.html', {'posts': posts, 'tag': tag})
