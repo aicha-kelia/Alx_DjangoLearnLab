@@ -30,3 +30,14 @@
 {% else %}
   <p><a href="{% url 'login' %}">Login</a> to comment.</p>
 {% endif %}
+
+<p>Tags: 
+{% for tag in post.tags.all %}
+    <a href="{% url 'posts-by-tag' tag.name %}">{{ tag.name }}</a>{% if not forloop.last %}, {% endif %}
+{% endfor %}
+</p>
+
+<form method="GET" action="{% url 'post-search' %}">
+    <input type="text" name="q" placeholder="Search posts...">
+    <button type="submit">Search</button>
+</form>
