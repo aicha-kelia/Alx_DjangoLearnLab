@@ -1,8 +1,11 @@
-from rest_framework import viewsets, permissions, filters, generics
+from rest_framework import viewsets, permissions, filters, generics, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import get_user_model
-from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer
+from django.contrib.contenttypes.models import ContentType
+from .models import Post, Comment, Like
+from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 
 User = get_user_model()
 
@@ -47,7 +50,17 @@ class CommentViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'updated_at']
     
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        comment = serializer.save(author=self.request.user)
+        
+        # Create notification for post author (if not commenting on own post)
+        if comment.post.author != self.request.user:
+            from notifications.models import Notification
+            Notification.objects.create(
+                recipient=comment.post.author,
+                actor=self.request.user,
+                verb='commented on your post',
+                target=comment.post
+            )
 
 
 class FeedView(generics.ListAPIView):
@@ -64,3 +77,68 @@ class FeedView(generics.ListAPIView):
         following_users = self.request.user.following.all()
         # Return posts from those users, ordered by creation date (most recent first)
         return Post.objects.filter(author__in=following_users).order_by('-created_at')
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def like_post(request, pk):
+    """Like a post"""
+    try:
+        post = Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response(
+            {'error': 'Post not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Check if user already liked the post
+    if Like.objects.filter(user=request.user, post=post).exists():
+        return Response(
+            {'error': 'You have already liked this post'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Create like
+    like = Like.objects.create(user=request.user, post=post)
+    
+    # Create notification for post author (if not liking own post)
+    if post.author != request.user:
+        from notifications.models import Notification
+        Notification.objects.create(
+            recipient=post.author,
+            actor=request.user,
+            verb='liked your post',
+            target=post
+        )
+    
+    return Response(
+        {'message': 'Post liked successfully'},
+        status=status.HTTP_201_CREATED
+    )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def unlike_post(request, pk):
+    """Unlike a post"""
+    try:
+        post = Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response(
+            {'error': 'Post not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Check if user has liked the post
+    try:
+        like = Like.objects.get(user=request.user, post=post)
+        like.delete()
+        return Response(
+            {'message': 'Post unliked successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Like.DoesNotExist:
+        return Response(
+            {'error': 'You have not liked this post'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
