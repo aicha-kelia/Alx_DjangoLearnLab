@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import authenticate, get_user_model
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, UserSerializer
+from .models import CustomUser
 
 User = get_user_model()
 
@@ -57,64 +58,66 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def follow_user(request, user_id):
+class FollowUserView(generics.GenericAPIView):
     """Follow a user"""
-    try:
-        user_to_follow = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response(
-            {'error': 'User not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    permission_classes = [permissions.IsAuthenticated]
     
-    if user_to_follow == request.user:
+    def post(self, request, user_id):
+        try:
+            user_to_follow = CustomUser.objects.all().get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'User not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if user_to_follow == request.user:
+            return Response(
+                {'error': 'You cannot follow yourself'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if request.user.following.filter(id=user_id).exists():
+            return Response(
+                {'error': 'You are already following this user'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        request.user.following.add(user_to_follow)
         return Response(
-            {'error': 'You cannot follow yourself'},
-            status=status.HTTP_400_BAD_REQUEST
+            {'message': f'You are now following {user_to_follow.username}'},
+            status=status.HTTP_200_OK
         )
-    
-    if request.user.following.filter(id=user_id).exists():
-        return Response(
-            {'error': 'You are already following this user'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    request.user.following.add(user_to_follow)
-    return Response(
-        {'message': f'You are now following {user_to_follow.username}'},
-        status=status.HTTP_200_OK
-    )
 
 
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def unfollow_user(request, user_id):
+class UnfollowUserView(generics.GenericAPIView):
     """Unfollow a user"""
-    try:
-        user_to_unfollow = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response(
-            {'error': 'User not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    permission_classes = [permissions.IsAuthenticated]
     
-    if not request.user.following.filter(id=user_id).exists():
+    def post(self, request, user_id):
+        try:
+            user_to_unfollow = CustomUser.objects.all().get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'User not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if not request.user.following.filter(id=user_id).exists():
+            return Response(
+                {'error': 'You are not following this user'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        request.user.following.remove(user_to_unfollow)
         return Response(
-            {'error': 'You are not following this user'},
-            status=status.HTTP_400_BAD_REQUEST
+            {'message': f'You have unfollowed {user_to_unfollow.username}'},
+            status=status.HTTP_200_OK
         )
-    
-    request.user.following.remove(user_to_unfollow)
-    return Response(
-        {'message': f'You have unfollowed {user_to_unfollow.username}'},
-        status=status.HTTP_200_OK
-    )
 
 
 class UserListView(generics.ListAPIView):
     """List all users"""
-    queryset = User.objects.all()
+    queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]

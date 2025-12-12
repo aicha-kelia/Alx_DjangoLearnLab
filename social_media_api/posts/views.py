@@ -52,7 +52,8 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class FeedView(generics.ListAPIView):
     """
-    Feed view that shows posts from users that the current user follows
+    Feed view that shows posts from users that the current user follows.
+    This view returns posts ordered by creation date, showing the most recent posts at the top.
     """
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
