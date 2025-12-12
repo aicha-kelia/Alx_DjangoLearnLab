@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import get_object_or_404
 from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 
@@ -83,23 +83,16 @@ class FeedView(generics.ListAPIView):
 @permission_classes([permissions.IsAuthenticated])
 def like_post(request, pk):
     """Like a post"""
-    try:
-        post = Post.objects.get(pk=pk)
-    except Post.DoesNotExist:
-        return Response(
-            {'error': 'Post not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    post = generics.get_object_or_404(Post, pk=pk)
     
-    # Check if user already liked the post
-    if Like.objects.filter(user=request.user, post=post).exists():
+    # Use get_or_create to handle like creation
+    like, created = Like.objects.get_or_create(user=request.user, post=post)
+    
+    if not created:
         return Response(
             {'error': 'You have already liked this post'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Create like
-    like = Like.objects.create(user=request.user, post=post)
     
     # Create notification for post author (if not liking own post)
     if post.author != request.user:
@@ -121,13 +114,7 @@ def like_post(request, pk):
 @permission_classes([permissions.IsAuthenticated])
 def unlike_post(request, pk):
     """Unlike a post"""
-    try:
-        post = Post.objects.get(pk=pk)
-    except Post.DoesNotExist:
-        return Response(
-            {'error': 'Post not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    post = generics.get_object_or_404(Post, pk=pk)
     
     # Check if user has liked the post
     try:
