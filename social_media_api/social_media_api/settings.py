@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import os
 from decouple import config
 import dj_database_url
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,15 +23,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=5zb24oi6-)nfxg8f3$sz*i!_3qr31z9fi!#imso69l+x4q@0o'
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key-change-this')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-temp-key-change-in-production')
+DEBUG = config('DEBUG', default='False') == 'True'
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = [
-    config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
-]
 
 
 # Application definition
@@ -167,3 +163,6 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    
+    # Trust Railway's proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
